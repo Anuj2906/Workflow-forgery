@@ -100,12 +100,12 @@ const InputPage = () => {
       console.log('API Response:', response.data);
       dispatch(setUserId(response.data));
       
-      // 
+      // fetces result of workflow execution
       const response2 = await axios.get(`http://localhost:8080/${currentWorkflowId}/user/${response.data}`);
       console.log('Fetched user data:', response2.data);
       dispatch(setResultData(response2.data));
 
-      navigate('/flow');
+      navigate('/flow'); // navigate to next page (flowchart page)
     } catch (error) {
       console.error('Error:', error.response ? error.response.data : error.message);
   

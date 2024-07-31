@@ -7,6 +7,8 @@ import { Container, Card } from 'react-bootstrap';
 import { useSelector } from 'react-redux';
 import { cloneDeep } from 'lodash';
 
+// example response of workflow execution
+
 // const data = {
 //   "id": {
 //       "timestamp": 1722181191,
@@ -48,13 +50,14 @@ import { cloneDeep } from 'lodash';
 // };
 
 export default function FlowChart() {
-  let resultData = useSelector((state) => state.workflow.resultData);
-  const data = cloneDeep(resultData);
+  let resultData = useSelector((state) => state.workflow.resultData); // getting workflow execution result from redux store
+  const data = cloneDeep(resultData); // deep clone of result data
   console.log("resultData1", typeof(data));
 
-  const color1 = "#6ede87";
-  const color2 = "#D6D5E6";
+  const color1 = "#6ede87"; // green color
+  const color2 = "#D6D5E6"; // gray color
 
+  // changing conditon to show on flowchart page
   for (let i = 0; i < data.tasks.length; i++) {
     let trueCondition = "";
     let falseCondition = "";
@@ -83,6 +86,7 @@ export default function FlowChart() {
     }
   }
 
+  // node rendering
   const initialNodes = [
     { id: "1", type: "input", data: { label: data.tasks[0].api_check }, position: { x: 250, y: 0 }, style: { backgroundColor: color1 } },
     { id: "2", data: { label: "loan approved" }, position: { x: 100, y: 100 }, style: { backgroundColor: data.tasks[0].status === "failure" ? color1 : color2 } },
@@ -93,6 +97,7 @@ export default function FlowChart() {
     { id: "7", data: { label: "loan approval required" }, position: { x: 600, y: 300 }, style: { backgroundColor: data.tasks[2].status === "success" && data.tasks[1].status === "success" && data.tasks[0].status === "success" ? color1 : color2 } }
   ];
   
+  // edge rendering
   const initialEdges = [
     { id: "e1-2", source: "1", target: "2", label: data.tasks[0].condition[1] },
     { id: "e1-3", source: "1", target: "3", label: data.tasks[0].condition[0] },

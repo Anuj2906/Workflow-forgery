@@ -14,12 +14,14 @@ const WorkflowPage = () => {
   const [selectedTask, setSelectedTask] = useState('');
   const [condition, setCondition] = useState('');
 
+  // placehoders for input fields
   const taskPlaceholders = {
-    'DOB check': 'Enter age (e.g. 20)',
+    'DOB check': 'Enter age (e.g. 20) (it will be treated like age > 20',
     'Gender check': 'Select gender',
     'Pincode check': 'Enter first two digits of pin code (e.g. 12)',
   };
 
+  // validation of format of input tasks
   const validateCondition = (task, condition) => {
     switch (task) {
       case 'DOB check':
@@ -33,6 +35,7 @@ const WorkflowPage = () => {
     }
   };
 
+  // for adding tasks to task list that will be the execution order of tasks
   const handleAddTask = () => {
     if (selectedTask && condition && validateCondition(selectedTask, condition)) {
       setTasks([...tasks, { api_check : selectedTask, condition }]);
@@ -43,6 +46,7 @@ const WorkflowPage = () => {
     }
   };
 
+  // for submitting workflow created
   const handleSubmit = async () => {
     if (tasks.length === 3) {
       const data = {
@@ -55,7 +59,7 @@ const WorkflowPage = () => {
 
       dispatch(setWorkflowData(response.data)); // Save the response data in Redux store
 
-      navigate('/input');
+      navigate('/input');// navigate to input data page (user data)
     } else {
       alert('Please complete all tasks before submitting');
     }
