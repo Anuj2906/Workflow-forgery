@@ -112,7 +112,6 @@ const InputPage = () => {
       if (error.response) {
         if (error.response.status === 302) {
           console.log('Redirecting to:', error.response.headers.location);
-          // Handle the redirection logic if needed
         }
         if (error.response.data && error.response.data.message) {
           alert(`Error: ${error.response.data.message}`);
