@@ -21,16 +21,17 @@ public class UserController {
     private WorkflowService workflowService;
 
     //  create and save user
-    @PostMapping("/{workflowId}/user")
-    public String saveUser(@RequestBody User user, @PathVariable ObjectId workflowId){
+    @PostMapping("/user")
+    public String saveUser(@RequestBody User user){
         return userService.addUser(user).getId().toHexString();
     }
+
     // return the executed workflows
-    @GetMapping("/{workflowId}/user/{userId}")
+    @GetMapping("/user/{userId}/workflow/{workflowId}")
     public ResponseEntity<?> getWorkflow(@PathVariable ObjectId workflowId, @PathVariable ObjectId userId){
         User user = userService.findUser(userId);
-        executeWorkflow.execute(workflowId,user);
-        return new ResponseEntity<>(workflowService.findWorkflow(workflowId), HttpStatus.OK);
+        String id = executeWorkflow.execute(workflowId,user);
+        return new ResponseEntity<>(workflowService.findWorkflow(id), HttpStatus.OK);
     }
 }
 

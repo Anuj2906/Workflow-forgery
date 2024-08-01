@@ -13,9 +13,10 @@
 
 package com.example.workflowManagement.service;
 
+import com.example.workflowManagement.entity.ExecutedWorkflow;
 import com.example.workflowManagement.entity.Task;
 import com.example.workflowManagement.entity.Workflow;
-import com.example.workflowManagement.repository.TaskRepo;
+import com.example.workflowManagement.repository.ExecutedWorkflowRepo;
 import com.example.workflowManagement.repository.WorkflowRepo;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ public class WorkflowService {
     private WorkflowRepo workflowRepo;
 
     @Autowired
-    private TaskRepo taskRepo;
+    private ExecutedWorkflowRepo executedWorkflowRepo;
 
     // Transactional because there are two operation and anyone fails, all fails
     //save task and workflows
@@ -43,7 +44,7 @@ public class WorkflowService {
             // Save tasks first
             for (Task task : workflow.getTasks()) {
                 System.out.println("Saving Task: " + task);
-                taskRepo.save(task);
+
             }
 
             // Save the workflow with references to the saved tasks
@@ -54,14 +55,19 @@ public class WorkflowService {
         return new Workflow();
     }
 
-    // return workflows by id
-    public Optional<Workflow> findWorkflow(ObjectId workId){
-        return workflowRepo.findById(workId);
+    // return executed workflows by id
+    public Optional<ExecutedWorkflow> findWorkflow(String workId){
+        ObjectId id = new ObjectId(workId);
+        return executedWorkflowRepo.findById(id);
     }
 
-//    return list of all workflows
+    //    return list of all workflows
     public List<Workflow> getAll(){
         return workflowRepo.findAll();
+    }
+
+    public Optional<Workflow> findByid(ObjectId id){
+        return workflowRepo.findById(id);
     }
 
     // delete workflows by id

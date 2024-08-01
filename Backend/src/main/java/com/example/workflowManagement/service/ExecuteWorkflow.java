@@ -1,9 +1,7 @@
 package com.example.workflowManagement.service;
 
-import com.example.workflowManagement.entity.Task;
-import com.example.workflowManagement.entity.User;
-import com.example.workflowManagement.entity.Workflow;
-import com.example.workflowManagement.repository.TaskRepo;
+import com.example.workflowManagement.entity.*;
+import com.example.workflowManagement.repository.ExecutedWorkflowRepo;
 import com.example.workflowManagement.repository.WorkflowRepo;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,88 +18,232 @@ import java.util.Optional;
 public class ExecuteWorkflow {
 
     @Autowired
-    private TaskRepo taskRepo;
+    private ExecutedWorkflowRepo executedWorkflowRepo;
     @Autowired
     private WorkflowRepo workflowRepo;
 
+
     // execute function to execute task one by one
-    public void execute(ObjectId workflowId, User user) {
+    public String execute(ObjectId workflowId, User user) {
+        ExecutedWorkflow executedWorkflow = new ExecutedWorkflow();
         Optional<Workflow> workflow = workflowRepo.findById(workflowId);
+        List<TaskNew> update_task_list = new ArrayList<>();
         if(workflow.isPresent()){
             Workflow flow = workflow.get();
             List<Task> tasklist= flow.getTasks();
-            for (Task task : tasklist) {
-                if ("DOB check".equals(task.getApi_check())) {
-                    performDobCheck(task, user);
-                } else if ("Gender check".equals(task.getApi_check())) {
-                    performGenderCheck(task, user);
-                } else if ("Pincode check".equals(task.getApi_check())) {
-                    performPincodeCheck(task, user);
+            for (int i=0;i<tasklist.size()-1;i++) {
+                TaskNew new_task = new TaskNew();
+                if ("DOB check".equals(tasklist.get(i).getApi_check())) {
+                    Task update_task= performDobCheck(tasklist.get(i), user, tasklist.get(i+1).getApi_check());
+                    new_task.setAction(update_task.getAction());
+                    new_task.setStatus(update_task.getStatus());
+                    new_task.setApi_check(update_task.getApi_check());
+                    String[] condition = tasklist.get(i).getCondition().split("\\s+");
+                    List<String> cond = new ArrayList<>();
+                    if(condition[1].equals("<")){
+                        cond.add(tasklist.get(i).getCondition());
+                        condition[1]=">";
+                        cond.add(String.join(" ", condition));
+                    }
+                    else{
+                        cond.add(tasklist.get(i).getCondition());
+                        condition[1]="<";
+                        cond.add(String.join(" ", condition));
+                    }
+                    new_task.setCondition(cond);
+
+                    if(update_task.getAction().equalsIgnoreCase("Loan_approved") || update_task.getAction().equalsIgnoreCase("Loan_approval_required"))
+                        break;
+                    update_task_list.add(new_task);
+                } else if ("Gender check".equals(tasklist.get(i).getApi_check())) {
+                    Task update_task=performGenderCheck(tasklist.get(i),user,tasklist.get(i+1).getApi_check());
+                    new_task.setAction(update_task.getAction());
+                    new_task.setStatus(update_task.getStatus());
+                    new_task.setApi_check(update_task.getApi_check());
+                    List<String> cond = new ArrayList<>();
+                    if(update_task.getCondition().equals("male")){
+                        cond.add(update_task.getCondition());
+                        cond.add("female");
+                    }
+                    else{
+                        cond.add(update_task.getCondition());
+                        cond.add("male");
+                    }
+                    new_task.setCondition(cond);
+                    if(update_task.getAction().equalsIgnoreCase("Loan_approved") || update_task.getAction().equalsIgnoreCase("Loan_approval_required"))
+                        break;
+                    update_task_list.add(new_task);
+                } else if ("Pincode check".equals(tasklist.get(i).getApi_check())) {
+                    Task update_task = performPincodeCheck(tasklist.get(i), user,tasklist.get(i+1).getApi_check());
+                    new_task.setAction(update_task.getAction());
+                    new_task.setStatus(update_task.getStatus());
+                    new_task.setApi_check(update_task.getApi_check());
+                    List<String> cond = new ArrayList<>();
+                    cond.add("starts with" + update_task.getCondition());
+                    cond.add("not starts with" + update_task.getCondition());
+                    new_task.setCondition(cond);
+                    if (update_task.getAction().equalsIgnoreCase("Loan_approved") || update_task.getAction().equalsIgnoreCase("Loan_approval_required"))
+                        break;
+                    update_task_list.add(new_task);
                 }
             }
+            TaskNew new_task = new TaskNew();
+            if ("DOB check".equals(tasklist.get(tasklist.size()-1).getApi_check())) {
+                Task update_task= performDobCheck(tasklist.get(tasklist.size()-1), user, null);
+                new_task.setAction(update_task.getAction());
+                new_task.setStatus(update_task.getStatus());
+                new_task.setApi_check(update_task.getApi_check());
+                String[] condition = tasklist.get(tasklist.size()-1).getCondition().split("\\s+");
+                List<String> cond = new ArrayList<>();
+                if(condition[1].equals("<")){
+                    cond.add(tasklist.get(tasklist.size()-1).getCondition());
+                    condition[1]=">";
+                    cond.add(String.join(" ", condition));
+                }
+                else{
+                    cond.add(tasklist.get(tasklist.size()-1).getCondition());
+                    condition[1]="<";
+                    cond.add(String.join(" ", condition));
+                }
+                new_task.setCondition(cond);
+                update_task_list.add(new_task);
+            }
+            else if ("Gender check".equals(tasklist.get(tasklist.size()-1).getApi_check())) {
+                Task update_task=performGenderCheck(tasklist.get(tasklist.size()-1),user,null);
+                new_task.setAction(update_task.getAction());
+                new_task.setStatus(update_task.getStatus());
+                new_task.setApi_check(update_task.getApi_check());
+                List<String> cond = new ArrayList<>();
+                if(update_task.getCondition().equals("male")){
+                    cond.add(update_task.getCondition());
+                    cond.add("female");
+                }
+                else{
+                    cond.add(update_task.getCondition());
+                    cond.add("male");
+                }
+                new_task.setCondition(cond);
+                update_task_list.add(new_task);
+            }
+            else if ("Pincode check".equals(tasklist.get(tasklist.size()-1).getApi_check())) {
+                Task update_task = performPincodeCheck(tasklist.get(tasklist.size()-1), user,null);
+                new_task.setAction(update_task.getAction());
+                new_task.setStatus(update_task.getStatus());
+                new_task.setApi_check(update_task.getApi_check());
+                List<String> cond = new ArrayList<>();
+                cond.add("starts with" + update_task.getCondition());
+                cond.add("not starts with" + update_task.getCondition());
+                new_task.setCondition(cond);
+                update_task_list.add(new_task);
+            }
+
+            executedWorkflow.setWorkflowId(workflowId);
+            executedWorkflow.setName(flow.getName());
+            executedWorkflow.setTask(update_task_list);
+            executedWorkflow.setUser(user);
+            //saving data
+            return executedWorkflowRepo.save(executedWorkflow).getId().toHexString();
         }
         else{
             System.out.println("No task found");
         }
-
+        return null;
     }
 
     // DOB check task
-    private void performDobCheck(Task task, User user) {
+    private Task performDobCheck(Task task, User user, String name) {
         try{
             LocalDate current = LocalDate.now();
             int age = Period.between(user.getDob(), current).getYears();
-            int conditionAge = Integer.parseInt(task.getCondition());
-
-            if (age > conditionAge) {
-                task.setAction("Gender check");
-                task.setStatus("success");
-            } else{
-                task.setStatus("failure");
-                task.setAction("Loan approved");
+            String[] condition = task.getCondition().split("\\s+");
+            int conditionAge = Integer.parseInt(condition[2]);
+            if(condition[1].equals(">")){
+                if(age>conditionAge){
+                    if(name!=null){
+                        task.setAction(name);
+                    }
+                    else{
+                        task.setAction("Loan_approval_required");
+                    }
+                    task.setStatus("success");
+                }
+                else {
+                    task.setStatus("failure");
+                    task.setAction("Loan_approved");
+                }
             }
-            taskRepo.save(task);
-        }catch (Exception e) {  // Catch generic exceptions or a more specific one like NumberFormatException
+            else{
+                if(age<conditionAge){
+                    if(name!=null){
+                        task.setAction(name);
+                    }
+                    else{
+                        task.setAction("Loan_approval_required");
+                    }
+                    task.setStatus("success");
+                }
+                else {
+                    task.setStatus("failure");
+                    task.setAction("Loan_approved");
+                }
+            }
+            return task;
+        }catch (Exception e) {
 
-            System.out.println("Internal server error");  // Optional: Log the exception for debugging purposes
+            System.out.println("Internal server error");
         }
+        return null;
     }
 
-//    Gender check task
-    private void performGenderCheck(Task task, User user) {
+    //    Gender check task
+    private Task performGenderCheck(Task task, User user, String name) {
         try{
 
-            if ((user.getGender().equalsIgnoreCase("M") && user.getGender().equalsIgnoreCase(task.getCondition())) ||
-                    (user.getGender().equalsIgnoreCase("F") && user.getGender().equalsIgnoreCase(task.getCondition()))
+            if ((user.getGender().equalsIgnoreCase("Male") && user.getGender().equalsIgnoreCase(task.getCondition())) ||
+                    (user.getGender().equalsIgnoreCase("Female") && user.getGender().equalsIgnoreCase(task.getCondition()))
             ) {
-                task.setAction("Pincode check");
+                if(name!=null){
+                    task.setAction(name);
+                }
+                else{
+                    task.setAction("Loan_approval_required");
+                }
                 task.setStatus("success");
             } else{
-                task.setAction("Loan status approved");
+                task.setAction("Loan_status_approved");
                 task.setStatus("failure");
             }
-            taskRepo.save(task);
+//            taskRepo.save(task);
+            return task;
         }catch(Exception e){
             System.out.println("Internal server error");
         }
+        return null;
     }
 
-//    Pincode check task
-    private void performPincodeCheck(Task task, User user) {
+    //    Pincode check task
+    private Task performPincodeCheck(Task task, User user,String name) {
         try{
 
             if (user.getPincode().startsWith(task.getCondition())) {
-                task.setAction("loan_approval_required");
-                task.setStatus("failure");
+                if(name!=null){
+                    task.setAction(name);
+                }
+                else{
+                    task.setAction("Loan_approval_required");
+                }
+                task.setStatus("success");
             } else {
 
                 task.setAction("loan_approved");
                 task.setStatus("success");
             }
-            taskRepo.save(task);
+//            taskRepo.save(task);
+            return task;
         }catch(Exception e){
             System.out.println("Internal server error");
         }
+        return null;
     }
 }
 

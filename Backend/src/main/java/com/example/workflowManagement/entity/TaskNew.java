@@ -1,27 +1,14 @@
 package com.example.workflowManagement.entity;
-import org.bson.types.ObjectId;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 
-public class Task {
+import java.util.List;
 
+public class TaskNew {
 
     private String api_check;
-    private String condition;
+    private List<String> condition;
     private String action;
     private String status;
-
-    public Task() {
-    }
-
-    public Task(String api_check, String condition, String action, String status) {
-
-        this.api_check = api_check;
-        this.condition = condition;
-        this.action = action;
-        this.status = status;
-    }
 
 
     public String getApi_check() {
@@ -32,11 +19,11 @@ public class Task {
         this.api_check = api_check;
     }
 
-    public String getCondition() {
+    public List<String> getCondition() {
         return condition;
     }
 
-    public void setCondition(String condition) {
+    public void setCondition(List<String> condition) {
         this.condition = condition;
     }
 
