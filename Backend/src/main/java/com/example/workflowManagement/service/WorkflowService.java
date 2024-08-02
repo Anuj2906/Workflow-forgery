@@ -41,12 +41,6 @@ public class WorkflowService {
     @Transactional
     public Workflow saveWorkflow(Workflow workflow) {
         try {
-            // Save tasks first
-            for (Task task : workflow.getTasks()) {
-                System.out.println("Saving Task: " + task);
-
-            }
-
             // Save the workflow with references to the saved tasks
             return workflowRepo.save(workflow);
         } catch (Exception e) {

@@ -14,7 +14,6 @@ public class Workflow {
     @Id
     private ObjectId id;
     private String name;
-    @DBRef
     private List<Task> tasks = new ArrayList<>();
 
     public Workflow() {
