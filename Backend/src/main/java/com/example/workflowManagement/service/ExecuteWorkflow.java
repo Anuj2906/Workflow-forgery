@@ -31,50 +31,172 @@ public class ExecuteWorkflow {
         if(workflow.isPresent()){
             Workflow flow = workflow.get();
             List<Task> tasklist= flow.getTasks();
-            for (int i=0;i<tasklist.size()-1;i++) {
+            int i=0;
+            for (i=0;i<tasklist.size()-1;i++) {
                 TaskNew new_task = new TaskNew();
-                if ("DOB check".equals(tasklist.get(i).getApi_check())) {
-                    Task update_task= performDobCheck(tasklist.get(i), user, tasklist.get(i+1).getApi_check());
-                    new_task.setAction(update_task.getAction());
-                    new_task.setStatus(update_task.getStatus());
-                    new_task.setApi_check(update_task.getApi_check());
-                    String[] condition = tasklist.get(i).getCondition().split("\\s+");
+                if(i>0 && tasklist.get(i-1).getStatus().equalsIgnoreCase("failure")){
+                    new_task.setAction(tasklist.get(i).getAction());
+                    new_task.setStatus(tasklist.get(i).getStatus());
+                    new_task.setApi_check(new_task.getApi_check());
                     List<String> cond = new ArrayList<>();
-                    if(condition[1].equals("<")){
+                    if(tasklist.get(i).getCondition().equalsIgnoreCase("male")){
+                        cond.add("male");
+                        cond.add("female");
+                    }
+                    else if(tasklist.get(i).getCondition().equalsIgnoreCase("female")){
+                        cond.add("female");
+                        cond.add("male");
+                    }
+                    else if(tasklist.get(i).getCondition().startsWith("age >")){
+                        String[] condition = tasklist.get(i).getCondition().split("\\s+");
+                        cond.add(tasklist.get(i).getCondition());
+                        condition[1]="<";
+                        cond.add(String.join(" ", condition));
+                    }
+                    else if(tasklist.get(i).getCondition().startsWith("age <")){
+                        String[] condition = tasklist.get(i).getCondition().split("\\s+");
                         cond.add(tasklist.get(i).getCondition());
                         condition[1]=">";
                         cond.add(String.join(" ", condition));
                     }
                     else{
-                        cond.add(tasklist.get(i).getCondition());
+                        cond.add("starts with" +" " + tasklist.get(i).getCondition());
+                        cond.add("not starts with" + " " + tasklist.get(i).getCondition());
+                    }
+                    new_task.setCondition(cond);
+                    update_task_list.add(new_task);
+                }
+                else{
+                    if ("DOB check".equals(tasklist.get(i).getApi_check())) {
+                        Task update_task= performDobCheck(tasklist.get(i), user, tasklist.get(i+1).getApi_check());
+                        new_task.setAction(update_task.getAction());
+                        new_task.setStatus(update_task.getStatus());
+                        new_task.setApi_check(update_task.getApi_check());
+                        String[] condition = tasklist.get(i).getCondition().split("\\s+");
+                        List<String> cond = new ArrayList<>();
+                        if(condition[1].equals("<")){
+                            cond.add(tasklist.get(i).getCondition());
+                            condition[1]=">";
+                            cond.add(String.join(" ", condition));
+                        }
+                        else{
+                            cond.add(tasklist.get(i).getCondition());
+                            condition[1]="<";
+                            cond.add(String.join(" ", condition));
+                        }
+                        new_task.setCondition(cond);
+
+                        if(update_task.getAction().equalsIgnoreCase("Loan_approved") || update_task.getAction().equalsIgnoreCase("Loan_approval_required"))
+                            break;
+                        update_task_list.add(new_task);
+                    }
+                    else if ("Gender check".equals(tasklist.get(i).getApi_check())) {
+                        Task update_task=performGenderCheck(tasklist.get(i),user,tasklist.get(i+1).getApi_check());
+                        new_task.setAction(update_task.getAction());
+                        new_task.setStatus(update_task.getStatus());
+                        new_task.setApi_check(update_task.getApi_check());
+                        List<String> cond = new ArrayList<>();
+                        if(update_task.getCondition().equalsIgnoreCase("male")){
+                            cond.add("male");
+                            cond.add("female");
+                        }
+                        else{
+                            cond.add("female");
+                            cond.add("male");
+                        }
+                        new_task.setCondition(cond);
+                        if(update_task.getAction().equalsIgnoreCase("Loan_approved") || update_task.getAction().equalsIgnoreCase("Loan_approval_required"))
+                            break;
+                        update_task_list.add(new_task);
+                    }
+                    else if ("Pincode check".equals(tasklist.get(i).getApi_check())) {
+                        Task update_task = performPincodeCheck(tasklist.get(i), user,tasklist.get(i+1).getApi_check());
+                        new_task.setAction(update_task.getAction());
+                        new_task.setStatus(update_task.getStatus());
+                        new_task.setApi_check(update_task.getApi_check());
+                        List<String> cond = new ArrayList<>();
+                        cond.add("starts with" +" " + update_task.getCondition());
+                        cond.add("not starts with" + " " + update_task.getCondition());
+                        new_task.setCondition(cond);
+                        if (update_task.getAction().equalsIgnoreCase("Loan_approved") || update_task.getAction().equalsIgnoreCase("Loan_approval_required"))
+                            break;
+                        update_task_list.add(new_task);
+                    }
+                }
+            }
+            TaskNew new_task = new TaskNew();
+            if(i>0 && tasklist.get(i-1).getStatus().equalsIgnoreCase("failure")){
+                new_task.setAction(tasklist.get(i).getAction());
+                new_task.setStatus(tasklist.get(i).getStatus());
+                new_task.setApi_check(tasklist.get(i).getApi_check());
+                List<String> cond = new ArrayList<>();
+                if(tasklist.get(i).getCondition().equalsIgnoreCase("male")){
+                    cond.add("male");
+                    cond.add("female");
+                }
+                else if(tasklist.get(i).getCondition().equalsIgnoreCase("female")){
+                    cond.add("female");
+                    cond.add("male");
+                }
+                else if(tasklist.get(i).getCondition().startsWith("age >")){
+                    String[] condition = tasklist.get(i).getCondition().split("\\s+");
+                    cond.add(tasklist.get(i).getCondition());
+                    condition[1]="<";
+                    cond.add(String.join(" ", condition));
+                }
+                else if(tasklist.get(i).getCondition().startsWith("age <")){
+                    String[] condition = tasklist.get(i).getCondition().split("\\s+");
+                    cond.add(tasklist.get(i).getCondition());
+                    condition[1]=">";
+                    cond.add(String.join(" ", condition));
+                }
+                else{
+                    cond.add("starts with" +" " + tasklist.get(i).getCondition());
+                    cond.add("not starts with" + " " + tasklist.get(i).getCondition());
+                }
+                new_task.setCondition(cond);
+                update_task_list.add(new_task);
+            }
+            else{
+                if ("DOB check".equals(tasklist.get(tasklist.size()-1).getApi_check())) {
+                    Task update_task= performDobCheck(tasklist.get(tasklist.size()-1), user, null);
+                    new_task.setAction(update_task.getAction());
+                    new_task.setStatus(update_task.getStatus());
+                    new_task.setApi_check(update_task.getApi_check());
+                    String[] condition = tasklist.get(tasklist.size()-1).getCondition().split("\\s+");
+                    List<String> cond = new ArrayList<>();
+                    if(condition[1].equals("<")){
+                        cond.add(tasklist.get(tasklist.size()-1).getCondition());
+                        condition[1]=">";
+                        cond.add(String.join(" ", condition));
+                    }
+                    else{
+                        cond.add(tasklist.get(tasklist.size()-1).getCondition());
                         condition[1]="<";
                         cond.add(String.join(" ", condition));
                     }
                     new_task.setCondition(cond);
-
-                    if(update_task.getAction().equalsIgnoreCase("Loan_approved") || update_task.getAction().equalsIgnoreCase("Loan_approval_required"))
-                        break;
                     update_task_list.add(new_task);
-                } else if ("Gender check".equals(tasklist.get(i).getApi_check())) {
-                    Task update_task=performGenderCheck(tasklist.get(i),user,tasklist.get(i+1).getApi_check());
+                }
+                else if ("Gender check".equals(tasklist.get(tasklist.size()-1).getApi_check())) {
+                    Task update_task=performGenderCheck(tasklist.get(tasklist.size()-1),user,null);
                     new_task.setAction(update_task.getAction());
                     new_task.setStatus(update_task.getStatus());
                     new_task.setApi_check(update_task.getApi_check());
                     List<String> cond = new ArrayList<>();
-                    if(update_task.getCondition().equals("male")){
-                        cond.add(update_task.getCondition());
+                    if(update_task.getCondition().equalsIgnoreCase("male")){
+                        cond.add("male");
                         cond.add("female");
                     }
                     else{
-                        cond.add(update_task.getCondition());
+                        cond.add("female");
                         cond.add("male");
                     }
                     new_task.setCondition(cond);
-                    if(update_task.getAction().equalsIgnoreCase("Loan_approved") || update_task.getAction().equalsIgnoreCase("Loan_approval_required"))
-                        break;
                     update_task_list.add(new_task);
-                } else if ("Pincode check".equals(tasklist.get(i).getApi_check())) {
-                    Task update_task = performPincodeCheck(tasklist.get(i), user,tasklist.get(i+1).getApi_check());
+                }
+                else if ("Pincode check".equals(tasklist.get(tasklist.size()-1).getApi_check())) {
+                    Task update_task = performPincodeCheck(tasklist.get(tasklist.size()-1), user,null);
                     new_task.setAction(update_task.getAction());
                     new_task.setStatus(update_task.getStatus());
                     new_task.setApi_check(update_task.getApi_check());
@@ -82,60 +204,10 @@ public class ExecuteWorkflow {
                     cond.add("starts with" + update_task.getCondition());
                     cond.add("not starts with" + update_task.getCondition());
                     new_task.setCondition(cond);
-                    if (update_task.getAction().equalsIgnoreCase("Loan_approved") || update_task.getAction().equalsIgnoreCase("Loan_approval_required"))
-                        break;
                     update_task_list.add(new_task);
                 }
             }
-            TaskNew new_task = new TaskNew();
-            if ("DOB check".equals(tasklist.get(tasklist.size()-1).getApi_check())) {
-                Task update_task= performDobCheck(tasklist.get(tasklist.size()-1), user, null);
-                new_task.setAction(update_task.getAction());
-                new_task.setStatus(update_task.getStatus());
-                new_task.setApi_check(update_task.getApi_check());
-                String[] condition = tasklist.get(tasklist.size()-1).getCondition().split("\\s+");
-                List<String> cond = new ArrayList<>();
-                if(condition[1].equals("<")){
-                    cond.add(tasklist.get(tasklist.size()-1).getCondition());
-                    condition[1]=">";
-                    cond.add(String.join(" ", condition));
-                }
-                else{
-                    cond.add(tasklist.get(tasklist.size()-1).getCondition());
-                    condition[1]="<";
-                    cond.add(String.join(" ", condition));
-                }
-                new_task.setCondition(cond);
-                update_task_list.add(new_task);
-            }
-            else if ("Gender check".equals(tasklist.get(tasklist.size()-1).getApi_check())) {
-                Task update_task=performGenderCheck(tasklist.get(tasklist.size()-1),user,null);
-                new_task.setAction(update_task.getAction());
-                new_task.setStatus(update_task.getStatus());
-                new_task.setApi_check(update_task.getApi_check());
-                List<String> cond = new ArrayList<>();
-                if(update_task.getCondition().equals("male")){
-                    cond.add(update_task.getCondition());
-                    cond.add("female");
-                }
-                else{
-                    cond.add(update_task.getCondition());
-                    cond.add("male");
-                }
-                new_task.setCondition(cond);
-                update_task_list.add(new_task);
-            }
-            else if ("Pincode check".equals(tasklist.get(tasklist.size()-1).getApi_check())) {
-                Task update_task = performPincodeCheck(tasklist.get(tasklist.size()-1), user,null);
-                new_task.setAction(update_task.getAction());
-                new_task.setStatus(update_task.getStatus());
-                new_task.setApi_check(update_task.getApi_check());
-                List<String> cond = new ArrayList<>();
-                cond.add("starts with" + update_task.getCondition());
-                cond.add("not starts with" + update_task.getCondition());
-                new_task.setCondition(cond);
-                update_task_list.add(new_task);
-            }
+
 
             executedWorkflow.setWorkflowId(workflowId);
             executedWorkflow.setName(flow.getName());
@@ -238,7 +310,6 @@ public class ExecuteWorkflow {
                 task.setAction("loan_approved");
                 task.setStatus("success");
             }
-//            taskRepo.save(task);
             return task;
         }catch(Exception e){
             System.out.println("Internal server error");
